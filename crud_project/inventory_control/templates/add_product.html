@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            Наименование
+            {{ form.name }}
+        </div>
+        <div class="mb-3">
+            Дата выпуска
+            {{ form.mfg }}
+        </div>
+        <div class="mb-3">
+            Годен до
+            {{ form.exp }}
+        </div>
+        <div class="mb-3">
+            Колличество
+            {{ form.quantity }}
+        </div>
+        <div class="mb-3">
+            Цена за единицу
+            {{ form.price_per_unit }}
+        </div>
+        <div class="mb-3">
+            Склад
+            {{ form.warehouse }}
+        </div>
+        <div class="mb-3">
+            Описание
+            {{ form.description }}
+        </div>
+        <button type="submit" class="btn btn-success">Добавить</button>
+    </form>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var currentDate = new Date().toISOString().split('T')[0];
+        document.getElementById('id_exp').min = currentDate;
+        // Инициализация datepicker для поля exp
+        var datepicker = new bootstrap.Datepicker(document.getElementById('id_exp'), {
+            format: 'yyyy-mm-dd', // Формат даты
+            autoclose: true, // Закрыть календарь после выбора даты
+            todayHighlight: true // Выделить сегодняшнюю дату
+        });
+    });
+</script>
+
+{% endblock content %}

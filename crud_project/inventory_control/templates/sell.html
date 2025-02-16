@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+
+<div class="container mt-4">
+<form class="post-form" id="sell-form" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div id="form-container">
+        <div class="d-flex justify-content-end">
+            <div class="me-3">
+                <select id="customer" class="form-select customer-select" name="customer" required>
+                    <option value="0">Выберите покупателя</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.customer }}</option>
+                    {% endfor %}
+                </select>
+                <div id="error-customer" class="text-danger ms-3 text-font"></div>
+            </div>
+            <div>
+                <button type="button" id="add-form" class="btn btn-outline-primary me-3">Добавить</button>
+                <button type="button" id="remove-form" class="btn btn-outline-danger me-3">Удалить</button>
+                <button type="submit" class="btn btn-success me-2">Продать</button>
+            </div>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Склад</th>
+                    <th>Товар</th>
+                    <th>Количество</th>
+                    <th>Цена за единицу</th>
+                    <th>Итого</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="form-row">
+                    <td>
+                        <select id="warehouse_0" class="form-select warehouse-select" name="warehouse" required>
+                            <option value="0">Выберите склад</option>
+                            {% for warehouse in warehouses %}
+                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="error-warehouse_0" class="text-danger ms-3 text-font"></div>
+                    </td>
+                    <td>
+                        <select id="product_0" class="form-select product-select" name="product" required>
+                            <option value="0">Выберите товар</option>
+                        </select>
+                        <div id="error-product_0" class="text-danger ms-3 text-font"></div>
+                    </td>
+                    <td>
+                        <div class="form-outline" data-mdb-input-init>
+                            <input type="number" name="quantity" class="form-control quantity-input" min="1" step="1" onkeypress="return isNumberKey(event)" placeholder="Количество" required />
+                            <div id="error-quantity_0" class="text-danger ms-3 text-font"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-outline" data-mdb-input-init>
+                            <input type="text" name="price" class="form-control price-input" aria-label="Disabled input example" placeholder="Цена" readonly>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-outline" data-mdb-input-init>
+                            <input type="text" name="total" class="form-control total-input" aria-label="Disabled input example" placeholder="Итого" readonly />
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</form>
+</div>
+<script>
+$(document).ready(function() {
+    let selectedProducts = [];
+    let formRowCounter = 0;
+
+    function updateIds(formRow) {
+        formRow.find('.warehouse-select').attr('id', 'warehouse_' + formRowCounter);
+        formRow.find('.product-select').attr('id', 'product_' + formRowCounter);
+        formRow.find('.quantity-input').attr('id', 'quantity_' + formRowCounter);
+        formRow.find('.text-danger').each(function() {
+            const baseId = $(this).attr('id').split('_')[0];
+            $(this).attr('id', baseId + '_' + formRowCounter);
+        });
+    }
+
+    function updateDropdown(url, target, parameterName, parameterValue) {
+        if (parameterValue === '0') {
+            $(target).html('<option value="0">Выберите товар</option>');
+            return;
+        }
+
+        $.get(url, { [parameterName]: parameterValue }, function(data, status) {
+            const currentProduct = $(target).val();
+            $(target).html(data);    
+            $(target).val(currentProduct);
+            filterProducts();
+        });
+    }
+
+    function filterProducts() {
+        $('.product-select').each(function() {
+            const currentSelect = $(this);
+            const currentVal = currentSelect.val();
+
+            currentSelect.find('option').each(function() {
+                if (selectedProducts.includes($(this).val()) && $(this).val() != currentVal) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        });
+    }
+
+
+    $('#form-container').on('change', '.warehouse-select', function() {
+        const formRow = $(this).closest('.form-row');
+        const quantityInput = formRow.find('.quantity-input');
+        const priceInput = formRow.find('.price-input');
+        const totalInput = formRow.find('.total-input');
+
+        quantityInput.val('');
+        priceInput.val('');
+        totalInput.val('');
+
+        const productSelect = formRow.find('.product-select');
+        updateDropdown("/get-product/", productSelect, "warehouse_id", $(this).val());
+    });
+
+    $('#form-container').on('change', '.product-select', function() {
+        const formRow = $(this).closest('.form-row');
+        const quantityInput = formRow.find('.quantity-input');
+        const priceInput = formRow.find('.price-input');
+        const totalInput = formRow.find('.total-input');
+        const selectedOption = $(this).find(':selected');
+        
+        const quantity = selectedOption.data('quantity');
+        const price = selectedOption.data('price');
+
+        quantityInput.attr('min', 1);
+        quantityInput.attr('max', quantity);
+        quantityInput.attr('placeholder', 'От 1 До ' + quantity);
+
+        priceInput.val(price);
+        totalInput.val(0);
+        recalculateTotal(formRow);
+
+        selectedProducts = $('.product-select').map(function() {
+            return $(this).val();
+        }).get();
+
+        filterProducts();
+    });
+
+    $('#form-container').on('input', '.quantity-input', function() {
+        const formRow = $(this).closest('.form-row');
+        recalculateTotal(formRow);
+    });
+
+    function recalculateTotal(formRow) {
+        const price = parseFloat(formRow.find('.price-input').val());
+        let quantity = parseFloat(formRow.find('.quantity-input').val());
+        const maxQuantity = parseFloat(formRow.find('.quantity-input').attr('max'));
+        const totalInput = formRow.find('.total-input');
+
+        if (isNaN(quantity)) {
+            quantity = null;
+        } else if (quantity > maxQuantity) {
+            quantity = maxQuantity;
+        } else if (quantity < 1) {
+            quantity = 1;
+        }
+
+        if (quantity === null) {
+            totalInput.val('');
+        } else {
+            formRow.find('.quantity-input').val(quantity);
+            const total = quantity * price;
+            totalInput.val(total.toFixed(2));
+        }
+    }
+
+    $('#add-form').click(function() {
+        const newFormRow = $('.form-row:first').clone();
+        newFormRow.find('select').val('0');
+        newFormRow.find('input').val('');
+        newFormRow.find('.product-select').html('<option value="0">Выберите товар</option>');
+        newFormRow.find('.quantity-input').attr('max', '');
+        newFormRow.find('.text-danger').html('');
+        $('#form-container table tbody').append(newFormRow);
+
+        formRowCounter++;
+        updateIds(newFormRow);
+        filterProducts();
+    });
+
+    $('#remove-form').click(function() {
+        if ($('.form-row').length > 1) {
+            $('.form-row:last').remove();
+            selectedProducts = $('.product-select').map(function() {
+                return $(this).val();
+            }).get();
+            filterProducts();
+            formRowCounter--;
+        }
+    });
+
+    $('#sell-form').submit(function(event) {
+        event.preventDefault();
+
+        const formData = $(this).serialize(); 
+
+        $.ajax({
+            url: "{% url 'sell' %}",
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                window.location.href = "/sell";
+            },
+            error: function(xhr, status, error) {
+                const errors = xhr.responseJSON.errors; 
+                let errorMessages = '';
+
+                const displayedErrors = {}; 
+
+                for (const field in errors) {
+                    if (!displayedErrors[field]) {
+                        errorMessages += `<p>${errors[field]}</p>`;
+                        $(`input#${field}, select#${field}`).addClass('is-invalid');
+                        $(`div#error-${field}`).html(errors[field]);
+                        displayedErrors[field] = true;
+                    }
+                }
+
+                $('#error-messages').html(errorMessages);
+            }
+        });
+    });
+
+    $('#form-container').on('change', 'select, input', function() {
+        $(this).removeClass('is-invalid');
+        $(`div#error-${$(this).attr('id')}`).html('');
+    });
+
+    $('#form-container').on('input', 'input', function() {
+        $(this).removeClass('is-invalid');
+        $(`div#error-${$(this).attr('id')}`).html('');
+    });
+
+    $('#customer').on('change', function() {
+        $(this).removeClass('is-invalid');
+        $('#error-customer').html('');
+    });
+
+});
+
+function isNumberKey(evt) {
+  var charCode = (evt.which) ? evt.which : evt.keyCode
+  if (charCode > 31 && (charCode < 48 || charCode > 57))
+    return false;
+  return true;
+}
+</script>
+{% endblock content %}

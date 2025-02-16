@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+{% load custom_filters %}
+
+<div class="container mt-4">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="name">Имя</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="mfg">Дата выпуска</label>
+            <input type="date" class="form-control" id="mfg" name="mfg" value="{{ product.mfg|date:'Y-m-d' }}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="exp">Истечение срока годности</label>
+            <input type="date" class="form-control" id="exp" name="exp" value="{{ product.exp|date:'Y-m-d' }}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="quantity">Колличество</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" value="{{ product.quantity }}">
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="price_per_unit">Цена за единицу</label>
+            <input type="number" step="any" class="form-control" id="price_per_unit" name="price_per_unit" value="{{ product.price_per_unit|floatformat:2|replace_comma }}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="warehouse">Склад</label>
+            <select class="form-control" id="warehouse" name="warehouse">
+                {% for warehouse in warehouses %}
+                    <option value="{{ warehouse.id }}" {% if warehouse.id == product.warehouse.id %}selected{% endif %}>
+                        {{ warehouse.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="description">Описание</label>
+            <select class="form-control" id="description" name="description">
+                <option value="">Выберите описание</option>
+                {% for description in descriptions %}
+                    <option value="{{ description.id }}" {% if product_description and description.id == product_description.id %}selected{% endif %}>
+                        {{ description.description }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Сохранить</button>
+    </form>
+</div>
+{% endblock %}

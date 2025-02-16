@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="col-md-12">
+    <div class="table-responsive">
+        <table id="TotalSale" class="table table-striped" width="100%" data-locale="ru-RU">
+            <thead>
+            <tr>
+                <th>Имя</th>
+                <th>Почта</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>{{ customer.customer }}</td>
+                <td>{{ customer.mail }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Имя</th>
+                <th>Почта</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock content %}

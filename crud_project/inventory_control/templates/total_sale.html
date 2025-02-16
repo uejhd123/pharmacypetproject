@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="col-md-12">
+    <div class="table-responsive">
+        <table id="TotalSale" class="table table-striped" width="100%" data-locale="ru-RU">
+            <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Кол-во</th>
+                <th>Цена за ед</th>
+                <th>Сумма</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in total_sales %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.total }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Итого</th>
+                <th>{{ total_quantity }}</th>
+                <th>{{ total_price }}</th>
+                <th>{{ total_sum }}</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock content %}

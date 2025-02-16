@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="col-md-12">
+    <div class="table-responsive">
+        <table id="ExpiredProducts" class="table table-striped" width="100%" data-locale="ru-RU">
+            <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Описание</th>
+                <th>Кол-во</th>
+                <th>Цена за ед</th>
+                <th>Сумма</th>
+                <th>Иготовленно</th>
+                <th>Годен до</th>
+                <th data-orderable="false">Удалить</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in expired_products %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.description.description }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>{{ product.price_per_unit }}</td>
+                <td>{{ product.total_purchase_amount }}</td>
+                <td>{{ product.mfg }}</td>
+                <td>{{ product.exp }}</td>
+                <td>
+                    <p data-placement="top" data-toggle="tooltip" title="Delete">
+                        <a href="#" class="btn btn-danger btn-sm dt-delete" data-title="Delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" onclick="setDeleteUrl('{% url 'destroy' 'expired_product' product.id %}')">
+                            <span class="bi bi-x-lg" aria-hidden="true"></span>
+                        </a>
+                    </p>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Товар</th>
+                <th>Описание</th>
+                <th>Кол-во</th>
+                <th>Цена за ед</th>
+                <th>Сумма</th>
+                <th>Иготовленно</th>
+                <th>Годен до</th>
+                <th>Удалить</th>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить эти данные?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <a id="confirmDeleteButton" href="#" class="btn btn-danger">Удалить</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadExpiredProducts(warehouseId) {
+    if ($('#ExpiredProducts').length) {
+        $.ajax({
+            url: '/api/expired_products/',
+            data: {
+                'warehouse_id': warehouseId
+            },
+            success: function(data) {
+                var table = $('#ExpiredProducts').DataTable();
+                table.clear().draw();
+                data.expired_products.forEach(function(product) {
+                    table.row.add([
+                        product.name,
+                        product.description,
+                        product.quantity,
+                        product.price_per_unit,
+                        product.total_purchase_amount,
+                        product.mfg,
+                        product.exp,
+                        `<p data-placement="top" data-toggle="tooltip" title="Delete">
+                            <a href="#" class="btn btn-danger btn-sm dt-delete" data-title="Delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" onclick="setDeleteUrl('/delete/expired_product/${product.id}')">
+                                <span class="bi bi-x-lg" aria-hidden="true"></span>
+                            </a>
+                        </p>`
+                    ]).draw();
+                });
+            }
+        });
+    }
+};
+
+function setDeleteUrl(url) {
+    document.getElementById('confirmDeleteButton').href = url;
+}
+</script>
+
+{% endblock content %}

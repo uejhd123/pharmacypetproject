@@ -1,0 +1,9 @@
+{% for product in products %}
+<option value="{{product.id}}"
+        data-quantity="{{product.quantity}}"
+        data-price="{{product.price_per_unit}}"
+        data-total="{{product.total_purchase_amount}}">
+    {{product.name}}
+</option>
+
+{% endfor %}
