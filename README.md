@@ -1,3 +1,9 @@
+technology list:
+1.Docker
+2.Kubernetess
+3.Terraform
+4.Ansible
+5.Jenkins
 # Starting a django project using Celery and Redis
 
 ## Start Redis
