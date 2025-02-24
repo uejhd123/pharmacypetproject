@@ -1,0 +1,76 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.python
+    environment:
+      - DJANGO_SUPERUSER_USERNAME=root
+      - DJANGO_SUPERUSER_EMAIL=akulenko21@bk.ru 
+      - DJANGO_SUPERUSER_PASSWORD=root
+    container_name: app_container
+    depends_on:
+      - db
+    networks:
+      pharmacynet:
+    ports:
+      - "8000:8000"
+
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    container_name: mysql_container
+    networks:
+      pharmacynet:
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  netshoot:
+    image: nicolaka/netshoot
+    command: sleep infinity
+    networks:
+      pharmacynet:
+
+  redis-server:
+    image: redis
+    ports:
+      - "6379:6379"
+    depends_on:
+      - db
+    networks:
+      pharmacynet:
+  celery:
+    build: 
+      context: .
+      dockerfile: Dockerfile.celery
+    depends_on:
+      - db
+      - redis-server
+    command: celery -A crud_project worker
+    networks:
+      pharmacynet:
+  celery-beat:
+    build: 
+      context: .
+      dockerfile: Dockerfile.celery
+    depends_on:
+      - db
+      - redis-server
+    command: celery -A crud_project beat 
+    networks:
+      pharmacynet:
+
+volumes:
+  mysql_data:
+
+networks:
+  pharmacynet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.0.0/16
+          gateway: 192.168.1.1
