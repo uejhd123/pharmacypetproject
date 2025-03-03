@@ -2,13 +2,16 @@ FROM python:3.11
 
 WORKDIR /app
 
-COPY . .
-
-COPY wait-for-it.sh /app/
+COPY requirements.txt requirements.txt
 
 RUN --mount=type=cache,target=/root/.cache pip3 install -r requirements.txt
 
+COPY . .
+
+COPY wait-for-it.sh /app/
+RUN chmod +x wait-for-it.sh
+
 CMD ["sh", "-c", "./wait-for-it.sh mysql_container:3306 --timeout=30 -- python3 crud_project/manage.py makemigrations && \
     python3 crud_project/manage.py migrate && \
-    python3 crud_project/manage.py createsuperuser --noinput || true && \
+    (python3 crud_project/manage.py createsuperuser --noinput || true) && \
     python3 crud_project/manage.py runserver 0.0.0.0:8000"]

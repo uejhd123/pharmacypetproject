@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   app:
     build: 
@@ -16,18 +18,18 @@ services:
       - "8000:8000"
 
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile.mysql
+    image: mysql:latest
     container_name: mysql_container
     networks:
       pharmacynet:
     environment:
       - MYSQL_ROOT_PASSWORD=password
-    ports:
-      - "3306:3306"
+      - MYSQL_DATABASE=pharmacy
+      - MYSQL_USER=kirill
+      - MYSQL_PASSWORD=KiRill1!2
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   netshoot:
     image: nicolaka/netshoot
@@ -37,12 +39,12 @@ services:
 
   redis-server:
     image: redis
-    ports:
-      - "6379:6379"
+    container_name: redis
     depends_on:
       - db
     networks:
       pharmacynet:
+
   celery:
     build: 
       context: .
@@ -53,6 +55,7 @@ services:
     command: celery -A crud_project worker
     networks:
       pharmacynet:
+
   celery-beat:
     build: 
       context: .
