@@ -5,8 +5,7 @@ pipeline {
     stages {
         stage("run") {
             steps {
-                sh 'docker compose down -d'
-                sh 'docker compose up -d'
+                sh 'docker version'
             }
         }
     }
