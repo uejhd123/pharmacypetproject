@@ -1,20 +1,14 @@
 pipeline {
+
     agent any
+
     stages {
-        stage('Build') {
+        stage("run") {
             steps {
-                echo 'Building..'
-            }
-        }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying....'
+                sh 'docker compose down -d'
+                sh 'docker compose up -d'
             }
         }
     }
+
 }
